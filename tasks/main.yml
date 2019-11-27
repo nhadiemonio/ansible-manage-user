@@ -1,0 +1,41 @@
+---
+- hosts: all
+  become: true
+  become_method: sudo
+
+  tasks:
+
+  - name: use centos variables
+    include_vars:
+      file: centos.yml
+    when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+
+  - name: use ubuntu variables
+    include_vars:
+      file: ubuntu.yml
+    when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+  - name: Add Users
+    user:
+      name: "{{ item.username }}"
+      shell: /bin/bash
+      groups: "{{ user_groups }}"
+      append: yes
+      password: "!"
+    with_items: "{{ users }}"
+
+  - name: Add authorized_keys
+    authorized_key:
+      user: "{{ item.username }}"
+      state: present
+      key: "{{ lookup('file', 'files/' + item.username + '.pub') }}"
+    with_items: "{{ users }}"
+
+  - name: add to sudoers, NOPASSWD
+    template:
+      src:  templates/sudo_users.j2
+      dest: /etc/sudoers.d/sudo_users
+      owner: root
+      group: root
+      mode: 0440
+
