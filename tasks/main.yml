@@ -1,10 +1,4 @@
 ---
-- hosts: all
-  become: true
-  become_method: sudo
-
-  tasks:
-
   - name: use centos variables
     include_vars:
       file: centos.yml
